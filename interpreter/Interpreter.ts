@@ -1,4 +1,4 @@
-enum Opcodes {
+export enum OpcodesEnum {
   STOP,
   ADD,
   PUSH,
@@ -15,10 +15,11 @@ enum Opcodes {
 }
 const EXECUTION_COMPLETE = "Execution complete";
 const EXECUTION_LIMIT = 10000;
+
 type State = {
   programCounter: number;
   stack: number[];
-  code: (Opcodes | number)[];
+  code: (OpcodesEnum | number)[];
   executionCount: number;
 };
 
@@ -45,9 +46,9 @@ class Interpreter {
       const opCode = code[this.state.programCounter];
       try {
         switch (opCode) {
-          case Opcodes.STOP:
+          case OpcodesEnum.STOP:
             throw new Error(EXECUTION_COMPLETE);
-          case Opcodes.PUSH: {
+          case OpcodesEnum.PUSH: {
             this.state.programCounter++;
             if (this.state.programCounter === this.state.code.length) {
               throw new Error(`Push code cannot be last`);
@@ -56,35 +57,35 @@ class Interpreter {
             this.state.stack.push(value);
             break;
           }
-          case Opcodes.ADD:
-          case Opcodes.SUB:
-          case Opcodes.MUL:
-          case Opcodes.DIV:
-          case Opcodes.LT:
-          case Opcodes.GT:
-          case Opcodes.EQ:
-          case Opcodes.AND:
-          case Opcodes.OR: {
+          case OpcodesEnum.ADD:
+          case OpcodesEnum.SUB:
+          case OpcodesEnum.MUL:
+          case OpcodesEnum.DIV:
+          case OpcodesEnum.LT:
+          case OpcodesEnum.GT:
+          case OpcodesEnum.EQ:
+          case OpcodesEnum.AND:
+          case OpcodesEnum.OR: {
             const a = this.state.stack.pop();
             const b = this.state.stack.pop();
             let result;
-            if (opCode === Opcodes.ADD) result = a + b;
-            if (opCode === Opcodes.SUB) result = a - b;
-            if (opCode === Opcodes.MUL) result = a * b;
-            if (opCode === Opcodes.DIV) result = a / b;
-            if (opCode === Opcodes.LT) result = a < b ? 1 : 0;
-            if (opCode === Opcodes.GT) result = a > b ? 1 : 0;
-            if (opCode === Opcodes.EQ) result = a === b ? 1 : 0;
-            if (opCode === Opcodes.AND) result = a && b;
-            if (opCode === Opcodes.OR) result = a || b;
+            if (opCode === OpcodesEnum.ADD) result = a + b;
+            if (opCode === OpcodesEnum.SUB) result = a - b;
+            if (opCode === OpcodesEnum.MUL) result = a * b;
+            if (opCode === OpcodesEnum.DIV) result = a / b;
+            if (opCode === OpcodesEnum.LT) result = a < b ? 1 : 0;
+            if (opCode === OpcodesEnum.GT) result = a > b ? 1 : 0;
+            if (opCode === OpcodesEnum.EQ) result = a === b ? 1 : 0;
+            if (opCode === OpcodesEnum.AND) result = a && b;
+            if (opCode === OpcodesEnum.OR) result = a || b;
             this.state.stack.push(result);
             break;
           }
-          case Opcodes.JUMP: {
+          case OpcodesEnum.JUMP: {
             this.jump();
             break;
           }
-          case Opcodes.JUMPI: {
+          case OpcodesEnum.JUMPI: {
             if (this.state.stack.pop()) {
               this.jump();
             }
@@ -112,7 +113,4 @@ class Interpreter {
     this.state.programCounter--;
   }
 }
-const code = [Opcodes.PUSH, 0, Opcodes.JUMP];
-
-const interpreter = new Interpreter();
-console.log(interpreter.runCode(code));
+export default Interpreter;
