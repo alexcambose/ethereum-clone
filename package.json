@@ -1,0 +1,39 @@
+{
+  "name": "eth",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node interpreter/Interpreter.ts",
+    "dev": "nodemon interpreter/Interpreter.ts"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "*.test.ts"
+    ],
+    "execMap": {
+      "ts": "ts-node"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexcambose/ethereum-clone.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alexcambose/ethereum-clone/issues"
+  },
+  "homepage": "https://github.com/alexcambose/ethereum-clone#readme",
+  "dependencies": {
+    "jest": "^26.4.2",
+    "nodemon": "^2.0.4",
+    "ts-node": "^9.0.0",
+    "tsc": "^1.20150623.0",
+    "typescript": "^4.0.2"
+  },
+  "devDependencies": {
+    "prettier": "2.1.1"
+  }
+}
