@@ -1,9 +1,10 @@
-import { GENESIS_DATA, MINE_RATE } from "../config";
-import { keccakHash } from "../util";
+import { GENESIS_DATA, MINE_RATE } from '../config';
+import { keccakHash } from '../util';
 
 const HASH_LENGTH = 64;
-const MAX_HASH_VALUE = parseInt("f".repeat(HASH_LENGTH), 16);
+const MAX_HASH_VALUE = parseInt('f'.repeat(HASH_LENGTH), 16);
 const MAX_NONCE_VALUE = 2 ** 64;
+
 interface TruncatedBlockHeaders {
   parentHash: string;
   beneficiary: string;
@@ -11,24 +12,28 @@ interface TruncatedBlockHeaders {
   number: number;
   timestamp: number;
 }
+
 export interface BlockHeaders extends TruncatedBlockHeaders {
   nonce: number;
 }
+
 export default class Block {
   blockHeaders: BlockHeaders;
+
   constructor({ blockHeaders }) {
     this.blockHeaders = blockHeaders;
   }
+
   static calculateBlockTargetHash({ lastBlock }: { lastBlock: Block }) {
     const value = (MAX_HASH_VALUE / lastBlock.blockHeaders.difficulty).toString(
       16
     );
 
     if (value.length > HASH_LENGTH) {
-      return "f".repeat(HASH_LENGTH);
+      return 'f'.repeat(HASH_LENGTH);
     }
 
-    return "0".repeat(HASH_LENGTH - value.length) + value;
+    return '0'.repeat(HASH_LENGTH - value.length) + value;
   }
 
   static adjustDifficulty({
@@ -76,5 +81,41 @@ export default class Block {
 
   static genesis(): Block {
     return new this(GENESIS_DATA);
+  }
+
+  static async validateBlock({
+    lastBlock,
+    block,
+  }: {
+    lastBlock?: Block;
+    block: Block;
+  }): Promise<boolean> {
+    if (keccakHash(block) === keccakHash(Block.genesis())) {
+      return true;
+    }
+    if (keccakHash(lastBlock.blockHeaders) !== block.blockHeaders.parentHash) {
+      throw new Error(
+        "The parent hash must be a hash of the last block's headers"
+      );
+    }
+    if (block.blockHeaders.number !== lastBlock.blockHeaders.number + 1) {
+      throw new Error('The block must increment the number by 1');
+    }
+    if (
+      Math.abs(
+        block.blockHeaders.difficulty - lastBlock.blockHeaders.difficulty
+      ) > 1
+    ) {
+      throw new Error('');
+    }
+    const underTargetHash = Block.calculateBlockTargetHash({ lastBlock });
+    const {
+      blockHeaders: { nonce, ...truncatedBlockHeaders },
+    } = block;
+    const hash = keccakHash(keccakHash(truncatedBlockHeaders) + nonce);
+    if (underTargetHash > hash) {
+      throw new Error('The block does not meet the proof of work requirement');
+    }
+    return true;
   }
 }

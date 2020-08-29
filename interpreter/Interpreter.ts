@@ -13,7 +13,8 @@ export enum OpcodesEnum {
   JUMP,
   JUMPI,
 }
-const EXECUTION_COMPLETE = "Execution complete";
+
+const EXECUTION_COMPLETE = 'Execution complete';
 const EXECUTION_LIMIT = 10000;
 
 interface State {
@@ -25,6 +26,7 @@ interface State {
 
 class Interpreter {
   state: State;
+
   constructor() {
     this.state = {
       programCounter: 0,
@@ -33,6 +35,7 @@ class Interpreter {
       executionCount: 0,
     };
   }
+
   runCode(code) {
     this.state.code = code;
 
@@ -104,6 +107,7 @@ class Interpreter {
       this.state.programCounter++;
     }
   }
+
   jump() {
     const destination = this.state.stack.pop();
     if (destination < 0 || destination > this.state.code.length) {
@@ -113,4 +117,5 @@ class Interpreter {
     this.state.programCounter--;
   }
 }
+
 export default Interpreter;

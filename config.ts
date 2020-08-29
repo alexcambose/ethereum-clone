@@ -1,9 +1,9 @@
-import Block from "./blockchain/Block";
+import Block from './blockchain/Block';
 
 export const GENESIS_DATA: Block = {
   blockHeaders: {
-    parentHash: "--genesis-parent-hash--",
-    beneficiary: "--genesis-beneficiary--",
+    parentHash: '--genesis-parent-hash--',
+    beneficiary: '--genesis-beneficiary--',
     difficulty: 1,
     number: 0,
     timestamp: 0,

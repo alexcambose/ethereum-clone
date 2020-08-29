@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node blockchain/Block.ts",
+    "start": "ts-node blockchain/Blockchain.ts",
     "dev": "nodemon interpreter/Interpreter.ts",
     "test": "jest",
     "test:watch": "jest --watchAll"

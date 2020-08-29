@@ -1,39 +1,39 @@
-import Block from "./Block";
-import { keccakHash } from "../util";
+import Block from './Block';
+import { keccakHash } from '../util';
 
-describe("Block", () => {
-  describe("calculateBlockTargetHash()", () => {
-    it("calculates the maximum hash when the last block difficulty is 1", () => {
+describe('Block', () => {
+  describe('calculateBlockTargetHash()', () => {
+    it('calculates the maximum hash when the last block difficulty is 1', () => {
       expect(
         Block.calculateBlockTargetHash({
           // @ts-ignore
           lastBlock: { blockHeaders: { difficulty: 1 } },
         })
-      ).toEqual("f".repeat(64));
+      ).toEqual('f'.repeat(64));
     });
-    it("calculates ta low hash value when the last block difficulty is high", () => {
+    it('calculates ta low hash value when the last block difficulty is high', () => {
       expect(
         Block.calculateBlockTargetHash({
           // @ts-ignore
           lastBlock: { blockHeaders: { difficulty: 500 } },
-        }) < "1"
+        }) < '1'
       ).toBeTruthy();
     });
   });
 
-  describe("mineBlock()", () => {
+  describe('mineBlock()', () => {
     let lastBlock: Block;
     let minedBlock: Block;
 
     beforeEach(() => {
       lastBlock = Block.genesis();
-      minedBlock = Block.mineBlock({ lastBlock, beneficiary: "aasd" });
+      minedBlock = Block.mineBlock({ lastBlock, beneficiary: 'aasd' });
     });
-    it("mines a block", () => {
+    it('mines a block', () => {
       expect(minedBlock).toBeInstanceOf(Block);
     });
 
-    it("mines a block that meets the proof of work requirements", () => {
+    it('mines a block that meets the proof of work requirements', () => {
       const target = Block.calculateBlockTargetHash({ lastBlock });
       const {
         blockHeaders: { nonce, ...truncatedBlockHeaders },
@@ -43,8 +43,8 @@ describe("Block", () => {
     });
   });
 
-  describe("adjustDifficulty()", () => {
-    it("keeps the difficulty above 0", () => {
+  describe('adjustDifficulty()', () => {
+    it('keeps the difficulty above 0', () => {
       expect(
         Block.adjustDifficulty({
           lastBlock: {
@@ -55,7 +55,7 @@ describe("Block", () => {
         })
       ).toEqual(1);
     });
-    it("increases the difficulty for a quickly mined block", () => {
+    it('increases the difficulty for a quickly mined block', () => {
       expect(
         Block.adjustDifficulty({
           lastBlock: {
@@ -70,7 +70,7 @@ describe("Block", () => {
         })
       ).toEqual(2);
     });
-    it("decreases the difficulty for a slowly mined block", () => {
+    it('decreases the difficulty for a slowly mined block', () => {
       expect(
         Block.adjustDifficulty({
           lastBlock: {
@@ -84,6 +84,46 @@ describe("Block", () => {
           timestamp: 20000,
         })
       ).toEqual(1);
+    });
+  });
+
+  describe('validateBlock()', () => {
+    let block: Block;
+    let lastBlock: Block;
+
+    beforeEach(() => {
+      lastBlock = Block.genesis();
+      block = Block.mineBlock({ lastBlock, beneficiary: 'b' });
+    });
+
+    it('resolves when the block is the genesis block', () => {
+      expect(Block.validateBlock({ block: Block.genesis() })).resolves;
+    });
+    it('resolves if the block is valid', () => {
+      expect(Block.validateBlock({ lastBlock, block })).resolves;
+    });
+
+    it('rejects when the parent hash is invalid', () => {
+      block.blockHeaders.parentHash = 'foo';
+      expect(Block.validateBlock({ lastBlock, block })).rejects;
+    });
+
+    it('rejects when the number is not increased by one', () => {
+      block.blockHeaders.number = 1234;
+      expect(Block.validateBlock({ lastBlock, block })).rejects;
+    });
+
+    it('rejects when the difficulty adjusts by more than 1', () => {
+      block.blockHeaders.difficulty = 31212321;
+      expect(Block.validateBlock({ lastBlock, block })).rejects;
+    });
+
+    it('rejects when the proof of work requirement is not met', () => {
+      const originalFunc = Block.calculateBlockTargetHash;
+      Block.calculateBlockTargetHash = () => '0'.repeat(64);
+
+      expect(Block.validateBlock({ lastBlock, block })).rejects;
+      Block.calculateBlockTargetHash = originalFunc;
     });
   });
 });
