@@ -16,12 +16,12 @@ export enum OpcodesEnum {
 const EXECUTION_COMPLETE = "Execution complete";
 const EXECUTION_LIMIT = 10000;
 
-type State = {
+interface State {
   programCounter: number;
   stack: number[];
   code: (OpcodesEnum | number)[];
   executionCount: number;
-};
+}
 
 class Interpreter {
   state: State;
