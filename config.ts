@@ -1,4 +1,6 @@
-export const GENESIS_DATA = {
+import Block from "./blockchain/Block";
+
+export const GENESIS_DATA: Block = {
   blockHeaders: {
     parentHash: "--genesis-parent-hash--",
     beneficiary: "--genesis-beneficiary--",
@@ -8,3 +10,5 @@ export const GENESIS_DATA = {
     nonce: 0,
   },
 };
+
+export const MINE_RATE = 13 * 1000;
