@@ -14,6 +14,13 @@ export default class Account {
   sign(data): EC.Signature {
     return this.keyPair.sign(keccakHash(data));
   }
+
+  toJSON() {
+    return {
+      address: this.address,
+      balance: this.balance,
+    };
+  }
   static verifySignature({ publicKey, data, signature }): Boolean {
     const keyFromPublic = ec.keyFromPublic(publicKey, 'hex');
     return keyFromPublic.verify(keccakHash(data), signature);
