@@ -1,13 +1,24 @@
 import Block from './Block';
+import Transaction from '../transaction/Transaction';
+import TransactionQueue from '../transaction/TransactionQueue';
 
 export default class Blockchain {
   chain: Block[] = [Block.genesis()];
 
   constructor() {}
 
-  async addBlock({ block }) {
+  async addBlock({
+    block,
+    transactionQueue,
+  }: {
+    block: Block;
+    transactionQueue: TransactionQueue;
+  }) {
     await Block.validateBlock({ lastBlock: this.lastBlock(), block });
     this.chain.push(block);
+    transactionQueue.clearBlockTransactions({
+      transactionSeries: block.transactionSeries,
+    });
   }
 
   lastBlock(): Block {

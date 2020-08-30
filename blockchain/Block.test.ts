@@ -27,7 +27,11 @@ describe('Block', () => {
 
     beforeEach(() => {
       lastBlock = Block.genesis();
-      minedBlock = Block.mineBlock({ lastBlock, beneficiary: 'aasd' });
+      minedBlock = Block.mineBlock({
+        lastBlock,
+        beneficiary: 'aasd',
+        transactionSeries: [],
+      });
     });
     it('mines a block', () => {
       expect(minedBlock).toBeInstanceOf(Block);
@@ -93,7 +97,11 @@ describe('Block', () => {
 
     beforeEach(() => {
       lastBlock = Block.genesis();
-      block = Block.mineBlock({ lastBlock, beneficiary: 'b' });
+      block = Block.mineBlock({
+        lastBlock,
+        beneficiary: 'b',
+        transactionSeries: [],
+      });
     });
 
     it('resolves when the block is the genesis block', () => {

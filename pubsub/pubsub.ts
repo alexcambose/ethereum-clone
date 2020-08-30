@@ -50,8 +50,11 @@ export default class Pubsub {
         switch (channel) {
           case CHANNELS_MAP.BLOCK:
             try {
-              await this.blockchain.addBlock({ block: message });
-              console.error(`New block accepted`);
+              await this.blockchain.addBlock({
+                block: message,
+                transactionQueue: this.transactionQueue,
+              });
+              console.error(`New block accepted`, message);
             } catch (e) {
               console.error(`New block rejected`, e.message);
             }

@@ -8,7 +8,9 @@ export const GENESIS_DATA: Block = {
     number: 0,
     timestamp: 0,
     nonce: 0,
+    transactionsRoot: '--genesis-transactions-root--',
   },
+  transactionSeries: [],
 };
 
 export const MINE_RATE = 13 * 1000;

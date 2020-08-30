@@ -25,10 +25,14 @@ app.get('/blockchain', (req, res, next) => {
 app.get('/blockchain/mine', async (req, res, next) => {
   const lastBlock = blockchain.lastBlock();
 
-  const block = Block.mineBlock({ lastBlock, beneficiary: account.address });
+  const block = Block.mineBlock({
+    lastBlock,
+    beneficiary: account.address,
+    transactionSeries: transactionQueue.getTransactionSeries(),
+  });
 
   try {
-    await blockchain.addBlock({ block });
+    await blockchain.addBlock({ block, transactionQueue });
     await pubsub.broadcastBlock(block);
     res.json({ block });
   } catch (error) {

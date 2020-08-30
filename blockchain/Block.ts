@@ -1,5 +1,6 @@
 import { GENESIS_DATA, MINE_RATE } from '../config';
 import { keccakHash } from '../util';
+import Transaction from '../transaction/Transaction';
 
 const HASH_LENGTH = 64;
 const MAX_HASH_VALUE = parseInt('f'.repeat(HASH_LENGTH), 16);
@@ -11,6 +12,7 @@ interface TruncatedBlockHeaders {
   difficulty: number;
   number: number;
   timestamp: number;
+  transactionsRoot: string;
 }
 
 export interface BlockHeaders extends TruncatedBlockHeaders {
@@ -19,9 +21,11 @@ export interface BlockHeaders extends TruncatedBlockHeaders {
 
 export default class Block {
   blockHeaders: BlockHeaders;
+  transactionSeries: Transaction[];
 
-  constructor({ blockHeaders }) {
+  constructor({ blockHeaders, transactionSeries }) {
     this.blockHeaders = blockHeaders;
+    this.transactionSeries = transactionSeries;
   }
 
   static calculateBlockTargetHash({ lastBlock }: { lastBlock: Block }) {
@@ -52,9 +56,11 @@ export default class Block {
   static mineBlock({
     lastBlock,
     beneficiary,
+    transactionSeries,
   }: {
     lastBlock: Block;
     beneficiary: string;
+    transactionSeries: Transaction[];
   }) {
     const target = Block.calculateBlockTargetHash({ lastBlock });
     let timestamp: number;
@@ -70,13 +76,17 @@ export default class Block {
         difficulty: Block.adjustDifficulty({ lastBlock, timestamp }),
         number: lastBlock.blockHeaders.number + 1,
         timestamp,
+        transactionsRoot: keccakHash(transactionSeries),
       };
       header = keccakHash(truncatedBlockHeaders);
       nonce = Math.floor(Math.random() * MAX_NONCE_VALUE);
       underTargetHash = keccakHash(header + nonce);
     } while (underTargetHash > target);
 
-    return new this({ blockHeaders: { ...truncatedBlockHeaders, nonce } });
+    return new this({
+      blockHeaders: { ...truncatedBlockHeaders, nonce },
+      transactionSeries,
+    });
   }
 
   static genesis(): Block {

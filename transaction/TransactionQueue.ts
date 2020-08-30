@@ -12,4 +12,14 @@ export default class TransactionQueue {
   getTransactionSeries(): Transaction[] {
     return Object.values(this.transactionMap);
   }
+
+  clearBlockTransactions({
+    transactionSeries,
+  }: {
+    transactionSeries: Transaction[];
+  }) {
+    for (const transaction of transactionSeries) {
+      delete this.transactionMap[transaction.id];
+    }
+  }
 }
