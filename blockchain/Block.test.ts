@@ -31,6 +31,7 @@ describe('Block', () => {
         lastBlock,
         beneficiary: 'aasd',
         transactionSeries: [],
+        stateRoot: 'a',
       });
     });
     it('mines a block', () => {
@@ -101,6 +102,7 @@ describe('Block', () => {
         lastBlock,
         beneficiary: 'b',
         transactionSeries: [],
+        stateRoot: 'a',
       });
     });
 

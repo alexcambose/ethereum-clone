@@ -13,6 +13,7 @@ interface TruncatedBlockHeaders {
   number: number;
   timestamp: number;
   transactionsRoot: string;
+  stateRoot: string;
 }
 
 export interface BlockHeaders extends TruncatedBlockHeaders {
@@ -57,10 +58,12 @@ export default class Block {
     lastBlock,
     beneficiary,
     transactionSeries,
+    stateRoot,
   }: {
     lastBlock: Block;
     beneficiary: string;
     transactionSeries: Transaction[];
+    stateRoot: string;
   }) {
     const target = Block.calculateBlockTargetHash({ lastBlock });
     let timestamp: number;
@@ -77,6 +80,7 @@ export default class Block {
         number: lastBlock.blockHeaders.number + 1,
         timestamp,
         transactionsRoot: keccakHash(transactionSeries),
+        stateRoot,
       };
       header = keccakHash(truncatedBlockHeaders);
       nonce = Math.floor(Math.random() * MAX_NONCE_VALUE);
@@ -129,5 +133,11 @@ export default class Block {
       throw new Error('The block does not meet the proof of work requirement');
     }
     return true;
+  }
+
+  static runBlock({ block, state }) {
+    for (let transaction of block.transactionSeries) {
+      Transaction.runTransaction({ transaction, state });
+    }
   }
 }

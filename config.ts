@@ -9,6 +9,7 @@ export const GENESIS_DATA: Block = {
     timestamp: 0,
     nonce: 0,
     transactionsRoot: '--genesis-transactions-root--',
+    stateRoot: '--genesis-state-root--',
   },
   transactionSeries: [],
 };

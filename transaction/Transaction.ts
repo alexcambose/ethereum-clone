@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import Account from '../account/Account';
 import { ec as EC } from 'elliptic';
+import State from '../store/State';
 enum TransactionTypeEnum {
   CREATE_ACCOUNT,
   TRANSACT,
@@ -100,5 +101,60 @@ export default class Transaction {
       }
     });
     return true;
+  }
+
+  static runTransaction({
+    transaction,
+    state,
+  }: {
+    transaction: Transaction;
+    state: State;
+  }) {
+    switch (transaction.data.type) {
+      case TransactionTypeEnum.TRANSACT:
+        Transaction.runStandardTransaction({ state, transaction });
+        console.log(
+          '-- Updated account data to reflect the standard transaction --'
+        );
+        break;
+      case TransactionTypeEnum.CREATE_ACCOUNT:
+        Transaction.runCreateAccountTransaction({ state, transaction });
+        console.log('-- Stored the account data --');
+        break;
+      default:
+        break;
+    }
+  }
+
+  static runStandardTransaction({
+    state,
+    transaction,
+  }: {
+    transaction: Transaction;
+    state: State;
+  }) {
+    const fromAccount = state.getAccount({ address: transaction.from });
+    const toAccount = state.getAccount({ address: transaction.to });
+
+    const { value } = transaction;
+
+    fromAccount.balance -= value;
+    toAccount.balance += value;
+
+    state.putAccount({ address: fromAccount, accountData: fromAccount });
+    state.putAccount({ address: toAccount, accountData: toAccount });
+  }
+  static runCreateAccountTransaction({
+    state,
+    transaction,
+  }: {
+    transaction: Transaction;
+    state: State;
+  }) {
+    const { accountData } = transaction.data;
+    // @ts-ignore
+    const { address } = accountData;
+
+    state.putAccount({ address, accountData });
   }
 }

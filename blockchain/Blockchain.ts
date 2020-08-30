@@ -1,11 +1,14 @@
 import Block from './Block';
 import Transaction from '../transaction/Transaction';
 import TransactionQueue from '../transaction/TransactionQueue';
+import State from '../store/State';
 
 export default class Blockchain {
   chain: Block[] = [Block.genesis()];
-
-  constructor() {}
+  state: State;
+  constructor({ state }) {
+    this.state = state;
+  }
 
   async addBlock({
     block,
@@ -16,6 +19,7 @@ export default class Blockchain {
   }) {
     await Block.validateBlock({ lastBlock: this.lastBlock(), block });
     this.chain.push(block);
+    Block.runBlock({ block, state: this.state });
     transactionQueue.clearBlockTransactions({
       transactionSeries: block.transactionSeries,
     });
@@ -31,6 +35,7 @@ export default class Blockchain {
       const lastBlock = i !== 0 && chain[i - 1];
 
       await Block.validateBlock({ lastBlock, block });
+      Block.runBlock({ block, state: this.state });
       console.log(
         `*-- Validated block number: ${block.blockHeaders.number} --*`
       );

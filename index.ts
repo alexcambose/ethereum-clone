@@ -7,10 +7,12 @@ import TransactionQueue from './transaction/TransactionQueue';
 import Account from './account/Account';
 import Transaction from './transaction/Transaction';
 import bodyParser from 'body-parser';
+import State from './store/State';
 
 const app = express();
 app.use(bodyParser.json());
-const blockchain = new Blockchain();
+const state = new State();
+const blockchain = new Blockchain({ state });
 const account = new Account();
 const transactionQueue = new TransactionQueue();
 const pubsub = new Pubsub({ blockchain, transactionQueue });
@@ -29,6 +31,7 @@ app.get('/blockchain/mine', async (req, res, next) => {
     lastBlock,
     beneficiary: account.address,
     transactionSeries: transactionQueue.getTransactionSeries(),
+    stateRoot: state.getStateRoot(),
   });
 
   try {
