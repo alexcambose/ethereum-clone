@@ -1,6 +1,8 @@
 import Pubnub from 'pubnub';
 import Block from '../blockchain/Block';
 import Blockchain from '../blockchain/Blockchain';
+import Transaction from '../transaction/Transaction';
+import TransactionQueue from '../transaction/TransactionQueue';
 
 const credentials = {
   publishKey: 'pub-c-33d05494-7ae4-419e-9c3d-426d80015bb8',
@@ -11,16 +13,19 @@ const credentials = {
 const CHANNELS_MAP = {
   TEST: 'TEST',
   BLOCK: 'BLOCK',
+  TRANSACTION: 'TRANSACTION',
 };
 
 export default class Pubsub {
   pubNub: Pubnub;
   blockchain: Blockchain;
-  constructor({ blockchain }) {
+  transactionQueue: TransactionQueue;
+  constructor({ blockchain, transactionQueue }) {
     this.pubNub = new Pubnub(credentials);
     this.subscribeToChannels();
     this.listen();
     this.blockchain = blockchain;
+    this.transactionQueue = transactionQueue;
   }
 
   subscribeToChannels(): void {
@@ -40,20 +45,23 @@ export default class Pubsub {
   listen() {
     this.pubNub.addListener({
       message: async (messageEvent: Pubnub.MessageEvent) => {
-        const { channel, message } = messageEvent;
-
+        let { channel, message } = messageEvent;
+        message = JSON.parse(message);
         switch (channel) {
           case CHANNELS_MAP.BLOCK:
-            console.log(channel, message);
-
-            const block = JSON.parse(message);
             try {
-              await this.blockchain.addBlock({ block });
+              await this.blockchain.addBlock({ block: message });
               console.error(`New block accepted`);
             } catch (e) {
               console.error(`New block rejected`, e.message);
             }
             break;
+
+          case CHANNELS_MAP.TRANSACTION:
+            console.log(`Received transaction ${message.id}`);
+            this.transactionQueue.add(new Transaction(message));
+            break;
+
           default:
             break;
         }
@@ -65,6 +73,13 @@ export default class Pubsub {
     await this.publish({
       channel: CHANNELS_MAP.BLOCK,
       message: JSON.stringify(block),
+    });
+  }
+
+  async broadcastTransaction(transaction: Transaction) {
+    await this.publish({
+      channel: CHANNELS_MAP.TRANSACTION,
+      message: JSON.stringify(transaction),
     });
   }
 }

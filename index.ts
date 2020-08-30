@@ -3,10 +3,19 @@ import axios from 'axios';
 import Blockchain from './blockchain/Blockchain';
 import Block from './blockchain/Block';
 import Pubsub from './pubsub/pubsub';
+import TransactionQueue from './transaction/TransactionQueue';
+import Account from './account/Account';
+import Transaction from './transaction/Transaction';
+import bodyParser from 'body-parser';
 
 const app = express();
+app.use(bodyParser.json());
 const blockchain = new Blockchain();
-const pubsub = new Pubsub({ blockchain });
+const account = new Account();
+const transactionQueue = new TransactionQueue();
+const pubsub = new Pubsub({ blockchain, transactionQueue });
+const transaction = Transaction.createTransaction({ account });
+setTimeout(() => pubsub.broadcastTransaction(transaction), 500);
 
 app.get('/blockchain', (req, res, next) => {
   const { chain } = blockchain;
@@ -16,7 +25,7 @@ app.get('/blockchain', (req, res, next) => {
 app.get('/blockchain/mine', async (req, res, next) => {
   const lastBlock = blockchain.lastBlock();
 
-  const block = Block.mineBlock({ lastBlock, beneficiary: 'a' });
+  const block = Block.mineBlock({ lastBlock, beneficiary: account.address });
 
   try {
     await blockchain.addBlock({ block });
@@ -25,6 +34,17 @@ app.get('/blockchain/mine', async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+app.post('/account/transact', (req, res) => {
+  const { to, value } = req.body;
+  const transaction = Transaction.createTransaction({
+    account: !to ? new Account() : account,
+    to,
+    value,
+  });
+  pubsub.broadcastTransaction(transaction);
+  res.json({ transaction });
 });
 
 app.use((err, req, res, next) => {

@@ -7,7 +7,7 @@ export default class Account {
   balance: number;
   constructor() {
     this.keyPair = ec.genKeyPair();
-    this.address = this.keyPair.getPublic();
+    this.address = this.keyPair.getPublic().encode('hex');
     this.balance = STARTING_BALANCE;
   }
 
