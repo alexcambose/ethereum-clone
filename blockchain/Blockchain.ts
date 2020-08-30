@@ -17,7 +17,11 @@ export default class Blockchain {
     block: Block;
     transactionQueue: TransactionQueue;
   }) {
-    await Block.validateBlock({ lastBlock: this.lastBlock(), block });
+    await Block.validateBlock({
+      lastBlock: this.lastBlock(),
+      block,
+      state: this.state,
+    });
     this.chain.push(block);
     Block.runBlock({ block, state: this.state });
     transactionQueue.clearBlockTransactions({
@@ -34,7 +38,7 @@ export default class Blockchain {
       const block = chain[i];
       const lastBlock = i !== 0 && chain[i - 1];
 
-      await Block.validateBlock({ lastBlock, block });
+      await Block.validateBlock({ lastBlock, block, state: this.state });
       Block.runBlock({ block, state: this.state });
       console.log(
         `*-- Validated block number: ${block.blockHeaders.number} --*`
@@ -43,12 +47,3 @@ export default class Blockchain {
     this.chain = chain;
   }
 }
-// TODO delete
-// const blockchain = new Blockchain();
-//
-// for (let i = 0; i < 1000; i++) {
-//   const lastBlock = blockchain.lastBlock();
-//   const block = Block.mineBlock({ lastBlock, beneficiary: "asd" });
-//   blockchain.addBlock({ block });
-//   console.log("block", block);
-// }

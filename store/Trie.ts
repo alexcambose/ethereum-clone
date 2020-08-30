@@ -43,4 +43,5 @@ export default class Trie {
     node.value = value;
     this.generateRootHash();
   }
+  static buildTrie({ items }: { items: object[] }): Trie {}
 }

@@ -10,7 +10,12 @@ const getMine = () =>
       axios.get(`${BASE_URL}/blockchain/mine`).then(resolve);
     }, 1000);
   });
-
+const getBalance = async ({ address = undefined } = {}) =>
+  (
+    await axios.get(
+      `${BASE_URL}/account/balance${address ? `?address=${address}` : ''}`
+    )
+  ).data;
 (async () => {
   let {
     data: {
@@ -26,4 +31,6 @@ const getMine = () =>
 
   // @ts-ignore
   console.log((await getMine()).data);
+
+  console.log(await getBalance({ address: accountData.address }));
 })();

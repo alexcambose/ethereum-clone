@@ -1,6 +1,8 @@
 import { GENESIS_DATA, MINE_RATE } from '../config';
 import { keccakHash } from '../util';
 import Transaction from '../transaction/Transaction';
+import State from '../store/State';
+import Trie from '../store/Trie';
 
 const HASH_LENGTH = 64;
 const MAX_HASH_VALUE = parseInt('f'.repeat(HASH_LENGTH), 16);
@@ -66,6 +68,8 @@ export default class Block {
     stateRoot: string;
   }) {
     const target = Block.calculateBlockTargetHash({ lastBlock });
+    const transactionsTrie = Trie.buildTrie({ items: transactionSeries });
+
     let timestamp: number;
     let truncatedBlockHeaders: TruncatedBlockHeaders;
     let header;
@@ -79,7 +83,7 @@ export default class Block {
         difficulty: Block.adjustDifficulty({ lastBlock, timestamp }),
         number: lastBlock.blockHeaders.number + 1,
         timestamp,
-        transactionsRoot: keccakHash(transactionSeries),
+        transactionsRoot: transactionsTrie.rootHash,
         stateRoot,
       };
       header = keccakHash(truncatedBlockHeaders);
@@ -100,9 +104,11 @@ export default class Block {
   static async validateBlock({
     lastBlock,
     block,
+    state,
   }: {
     lastBlock?: Block;
     block: Block;
+    state: State;
   }): Promise<boolean> {
     if (keccakHash(block) === keccakHash(Block.genesis())) {
       return true;
@@ -132,6 +138,11 @@ export default class Block {
     if (underTargetHash < hash) {
       throw new Error('The block does not meet the proof of work requirement');
     }
+
+    await Transaction.validateTransactionSeries({
+      transactionSeries: block.transactionSeries,
+      state,
+    });
     return true;
   }
 

@@ -17,8 +17,8 @@ const account = new Account();
 const transactionQueue = new TransactionQueue();
 const pubsub = new Pubsub({ blockchain, transactionQueue });
 const transaction = Transaction.createTransaction({ account });
-setTimeout(() => pubsub.broadcastTransaction(transaction), 500);
-
+setTimeout(() => pubsub.broadcastTransaction(transaction), 1500);
+console.log('My account address is: ', account.address);
 app.get('/blockchain', (req, res, next) => {
   const { chain } = blockchain;
   res.json({ chain });
@@ -52,6 +52,18 @@ app.post('/account/transact', (req, res) => {
   });
   pubsub.broadcastTransaction(transaction);
   res.json({ transaction });
+});
+
+app.get('/account/balance', (req, res) => {
+  const { address } = req.query;
+  const targetAddress = address ? address.toString() : account.address;
+  console.log(`Getting balance for address: ${targetAddress}`);
+  console.log(JSON.stringify(state));
+  const balance = Account.calculateBalance({
+    address: targetAddress,
+    state,
+  });
+  res.json({ balance });
 });
 
 app.use((err, req, res, next) => {

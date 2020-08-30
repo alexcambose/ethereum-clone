@@ -64,10 +64,12 @@ export default class Transaction {
   }
   static async validateStandardTransaction({
     transaction,
+    state,
   }: {
     transaction: Transaction;
+    state: State;
   }): Promise<boolean> {
-    const { id, from, signature } = transaction;
+    const { id, from, signature, value, to } = transaction;
     const transactionData = { ...transaction };
     delete transactionData.signature;
 
@@ -79,6 +81,17 @@ export default class Transaction {
       })
     ) {
       throw new Error(`Transaction ${id} signature is invalid`);
+    }
+    const fromBalance = state.getAccount({ address: from }).balance;
+    if (value > fromBalance) {
+      throw new Error(
+        `Transaction value ${value} exceeds the balance ${fromBalance}`
+      );
+    }
+
+    const toAccount = state.getAccount({ address: to });
+    if (!toAccount) {
+      throw new Error(`The to field: ${to} does not exist!`);
     }
     return true;
   }
@@ -100,6 +113,29 @@ export default class Transaction {
         throw new Error(`The field ${field}, is unexpected for account data`);
       }
     });
+    return true;
+  }
+
+  static async validateTransactionSeries({
+    transactionSeries,
+    state,
+  }: {
+    transactionSeries: Transaction[];
+    state: State;
+  }): Promise<boolean> {
+    for (const transaction of transactionSeries) {
+      switch (transaction.data.type) {
+        case TransactionTypeEnum.CREATE_ACCOUNT:
+          await this.validateCreateAccountTransaction({ transaction });
+          break;
+        case TransactionTypeEnum.TRANSACT:
+          await this.validateStandardTransaction({ transaction, state });
+          break;
+        default:
+          break;
+      }
+    }
+
     return true;
   }
 
@@ -141,8 +177,11 @@ export default class Transaction {
     fromAccount.balance -= value;
     toAccount.balance += value;
 
-    state.putAccount({ address: fromAccount, accountData: fromAccount });
-    state.putAccount({ address: toAccount, accountData: toAccount });
+    state.putAccount({
+      address: fromAccount.address,
+      accountData: fromAccount,
+    });
+    state.putAccount({ address: toAccount.address, accountData: toAccount });
   }
   static runCreateAccountTransaction({
     state,

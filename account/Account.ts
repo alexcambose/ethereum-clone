@@ -1,6 +1,7 @@
 import { ec, keccakHash } from '../util';
 import { STARTING_BALANCE } from '../config';
 import { ec as EC } from 'elliptic';
+import State from '../store/State';
 export default class Account {
   keyPair;
   address: string;
@@ -24,5 +25,15 @@ export default class Account {
   static verifySignature({ publicKey, data, signature }): Boolean {
     const keyFromPublic = ec.keyFromPublic(publicKey, 'hex');
     return keyFromPublic.verify(keccakHash(data), signature);
+  }
+
+  static calculateBalance({
+    address,
+    state,
+  }: {
+    address: string;
+    state: State;
+  }): number {
+    return state.getAccount({ address }).balance;
   }
 }

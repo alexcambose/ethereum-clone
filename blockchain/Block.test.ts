@@ -1,5 +1,6 @@
 import Block from './Block';
 import { keccakHash } from '../util';
+import State from '../store/State';
 
 describe('Block', () => {
   describe('calculateBlockTargetHash()', () => {
@@ -95,6 +96,7 @@ describe('Block', () => {
   describe('validateBlock()', () => {
     let block: Block;
     let lastBlock: Block;
+    let state: State;
 
     beforeEach(() => {
       lastBlock = Block.genesis();
@@ -107,32 +109,32 @@ describe('Block', () => {
     });
 
     it('resolves when the block is the genesis block', () => {
-      expect(Block.validateBlock({ block: Block.genesis() })).resolves;
+      expect(Block.validateBlock({ block: Block.genesis(), state })).resolves;
     });
     it('resolves if the block is valid', () => {
-      expect(Block.validateBlock({ lastBlock, block })).resolves;
+      expect(Block.validateBlock({ lastBlock, block, state })).resolves;
     });
 
     it('rejects when the parent hash is invalid', () => {
       block.blockHeaders.parentHash = 'foo';
-      expect(Block.validateBlock({ lastBlock, block })).rejects;
+      expect(Block.validateBlock({ lastBlock, block, state })).rejects;
     });
 
     it('rejects when the number is not increased by one', () => {
       block.blockHeaders.number = 1234;
-      expect(Block.validateBlock({ lastBlock, block })).rejects;
+      expect(Block.validateBlock({ lastBlock, block, state })).rejects;
     });
 
     it('rejects when the difficulty adjusts by more than 1', () => {
       block.blockHeaders.difficulty = 31212321;
-      expect(Block.validateBlock({ lastBlock, block })).rejects;
+      expect(Block.validateBlock({ lastBlock, block, state })).rejects;
     });
 
     it('rejects when the proof of work requirement is not met', () => {
       const originalFunc = Block.calculateBlockTargetHash;
       Block.calculateBlockTargetHash = () => '0'.repeat(64);
 
-      expect(Block.validateBlock({ lastBlock, block })).rejects;
+      expect(Block.validateBlock({ lastBlock, block, state })).rejects;
       Block.calculateBlockTargetHash = originalFunc;
     });
   });
