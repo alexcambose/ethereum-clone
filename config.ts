@@ -12,3 +12,4 @@ export const GENESIS_DATA: Block = {
 };
 
 export const MINE_RATE = 13 * 1000;
+export const STARTING_BALANCE = 1000;
