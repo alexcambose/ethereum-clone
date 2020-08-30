@@ -2,9 +2,12 @@ import { v4 as uuid } from 'uuid';
 import Account from '../account/Account';
 import { ec as EC } from 'elliptic';
 import State from '../store/State';
+import { MINING_REWARD } from '../config';
+
 enum TransactionTypeEnum {
   CREATE_ACCOUNT,
   TRANSACT,
+  MINING_REWARD,
 }
 interface TransactionData {
   type: TransactionTypeEnum;
@@ -37,11 +40,22 @@ export default class Transaction {
     account,
     to,
     value,
+    beneficiary,
   }: {
-    account: Account;
+    account?: Account;
     to?: string;
     value?: number;
+    beneficiary?: string;
   }) {
+    if (beneficiary) {
+      return new Transaction({
+        to: beneficiary,
+        value: MINING_REWARD,
+        data: {
+          type: TransactionTypeEnum.MINING_REWARD,
+        },
+      });
+    }
     if (to) {
       const transactionData = {
         id: uuid(),
@@ -116,6 +130,20 @@ export default class Transaction {
     return true;
   }
 
+  static async validateMiningRewardTransaction({
+    transaction,
+  }: {
+    transaction: Transaction;
+  }): Promise<boolean> {
+    const { value } = transaction;
+    if (value !== MINING_REWARD) {
+      throw new Error(
+        `The provided mining reward value: ${value} does not equal: ${MINING_REWARD}`
+      );
+    }
+    return true;
+  }
+
   static async validateTransactionSeries({
     transactionSeries,
     state,
@@ -130,6 +158,9 @@ export default class Transaction {
           break;
         case TransactionTypeEnum.TRANSACT:
           await this.validateStandardTransaction({ transaction, state });
+          break;
+        case TransactionTypeEnum.MINING_REWARD:
+          await this.validateMiningRewardTransaction({ transaction });
           break;
         default:
           break;
@@ -156,6 +187,12 @@ export default class Transaction {
       case TransactionTypeEnum.CREATE_ACCOUNT:
         Transaction.runCreateAccountTransaction({ state, transaction });
         console.log('-- Stored the account data --');
+        break;
+      case TransactionTypeEnum.MINING_REWARD:
+        Transaction.runMiningRewardTransaction({ state, transaction });
+        console.log(
+          '-- Updated the account data to reflect the mining reward--'
+        );
         break;
       default:
         break;
@@ -195,5 +232,20 @@ export default class Transaction {
     const { address } = accountData;
 
     state.putAccount({ address, accountData });
+  }
+
+  static runMiningRewardTransaction({
+    state,
+    transaction,
+  }: {
+    transaction: Transaction;
+    state: State;
+  }) {
+    const { to, value } = transaction;
+    const accountData = state.getAccount({ address: to });
+
+    accountData.balance += value;
+
+    state.putAccount({ address: to, accountData });
   }
 }

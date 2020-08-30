@@ -68,6 +68,10 @@ export default class Block {
     stateRoot: string;
   }) {
     const target = Block.calculateBlockTargetHash({ lastBlock });
+    const miningRewardTransaction = Transaction.createTransaction({
+      beneficiary,
+    });
+    transactionSeries.push(miningRewardTransaction);
     const transactionsTrie = Trie.buildTrie({ items: transactionSeries });
 
     let timestamp: number;
@@ -157,6 +161,7 @@ export default class Block {
   }
 
   static runBlock({ block, state }) {
+    // console.log(`Running transaction series`, block.transactionSeries);
     for (let transaction of block.transactionSeries) {
       Transaction.runTransaction({ transaction, state });
     }
