@@ -112,8 +112,10 @@ export default class Block {
     const {
       blockHeaders: { nonce, ...truncatedBlockHeaders },
     } = block;
+
     const hash = keccakHash(keccakHash(truncatedBlockHeaders) + nonce);
-    if (underTargetHash > hash) {
+
+    if (underTargetHash < hash) {
       throw new Error('The block does not meet the proof of work requirement');
     }
     return true;
