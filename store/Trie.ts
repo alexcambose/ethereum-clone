@@ -43,5 +43,15 @@ export default class Trie {
     node.value = value;
     this.generateRootHash();
   }
-  static buildTrie({ items }: { items: object[] }): Trie {}
+  static buildTrie({ items }: { items: object[] }): Trie {
+    const trie = new this();
+
+    for (const item of items.sort((a, b) =>
+      keccakHash(a) > keccakHash(b) ? 1 : 0
+    )) {
+      trie.put({ key: keccakHash(item), value: item });
+    }
+
+    return trie;
+  }
 }

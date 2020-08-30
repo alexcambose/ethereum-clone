@@ -1,6 +1,7 @@
 import Block from './Block';
 import { keccakHash } from '../util';
 import State from '../store/State';
+import Transaction from '../transaction/Transaction';
 
 describe('Block', () => {
   describe('calculateBlockTargetHash()', () => {
@@ -136,6 +137,13 @@ describe('Block', () => {
 
       expect(Block.validateBlock({ lastBlock, block, state })).rejects;
       Block.calculateBlockTargetHash = originalFunc;
+    });
+
+    it('rejects then the transaction series is not valid', () => {
+      block.transactionSeries = [new Transaction({})];
+      expect(
+        Block.validateBlock({ lastBlock, block, state })
+      ).rejects.toMatchObject({ message: /match/ });
     });
   });
 });

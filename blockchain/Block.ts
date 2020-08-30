@@ -128,6 +128,16 @@ export default class Block {
     ) {
       throw new Error('');
     }
+    const rebuiltTransactionsTrie = Trie.buildTrie({
+      items: block.transactionSeries,
+    });
+    if (
+      rebuiltTransactionsTrie.rootHash !== block.blockHeaders.transactionsRoot
+    ) {
+      throw new Error(
+        `Rebuilt transactions root does not match the block's transactions root: ${block.blockHeaders.transactionsRoot}`
+      );
+    }
     const underTargetHash = Block.calculateBlockTargetHash({ lastBlock });
     const {
       blockHeaders: { nonce, ...truncatedBlockHeaders },
