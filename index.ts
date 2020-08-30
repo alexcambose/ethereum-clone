@@ -1,4 +1,5 @@
 import express from 'express';
+import axios from 'axios';
 import Blockchain from './blockchain/Blockchain';
 import Block from './blockchain/Block';
 import Pubsub from './pubsub/pubsub';
@@ -31,9 +32,16 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: err.message });
 });
 
-const PORT = process.argv.includes('--peer')
-  ? Math.floor(Math.random() * 100 + 3000)
-  : 3000;
+const IS_PEER = process.argv.includes('--peer');
+const PORT = IS_PEER ? Math.floor(Math.random() * 100 + 3000) : 3000;
+
+if (IS_PEER) {
+  axios.get(`http://localhost:${3000}/blockchain`).then(async (res) => {
+    const { chain } = res.data;
+    await blockchain.replaceChain({ chain });
+    console.log(`*-- Blockchain synced --*`);
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Listening on http://localhost:${PORT}`);
