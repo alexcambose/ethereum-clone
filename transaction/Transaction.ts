@@ -1,17 +1,20 @@
-import uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 import Account from '../account/Account';
 import { ec as EC } from 'elliptic';
 enum TransactionTypeEnum {
   CREATE_ACCOUNT,
   TRANSACT,
 }
-
+interface TransactionData {
+  type: TransactionTypeEnum;
+  accountData?: object;
+}
 export default class Transaction {
   id: string;
   from: string;
   to: string;
   value: number;
-  data: object;
+  data: TransactionData;
   signature: EC.Signature;
   constructor({
     id = uuid(),
@@ -35,8 +38,8 @@ export default class Transaction {
     value,
   }: {
     account: Account;
-    to: string;
-    value: number;
+    to?: string;
+    value?: number;
   }) {
     if (to) {
       const transactionData = {
@@ -57,5 +60,45 @@ export default class Transaction {
         accountData: account.toJSON(),
       },
     });
+  }
+  static async validateStandardTransaction({
+    transaction,
+  }: {
+    transaction: Transaction;
+  }): Promise<boolean> {
+    const { id, from, signature } = transaction;
+    const transactionData = { ...transaction };
+    delete transactionData.signature;
+
+    if (
+      !Account.verifySignature({
+        publicKey: from,
+        data: transactionData,
+        signature,
+      })
+    ) {
+      throw new Error(`Transaction ${id} signature is invalid`);
+    }
+    return true;
+  }
+  static async validateCreateAccountTransaction({
+    transaction,
+  }: {
+    transaction: Transaction;
+  }): Promise<boolean> {
+    const expectedAccountDataFields = Object.keys(new Account().toJSON());
+    const fields = Object.keys(transaction.data.accountData);
+
+    if (fields.length !== expectedAccountDataFields.length) {
+      throw new Error(
+        `The transaction account data has an incorrect number of fields`
+      );
+    }
+    fields.forEach((field) => {
+      if (!expectedAccountDataFields.includes(field)) {
+        throw new Error(`The field ${field}, is unexpected for account data`);
+      }
+    });
+    return true;
   }
 }
