@@ -1,4 +1,5 @@
 import Interpreter, { OpcodesEnum } from './Interpreter';
+import Trie from '../store/Trie';
 
 describe('Interpreter', () => {
   describe('runCode()', () => {
@@ -12,7 +13,7 @@ describe('Interpreter', () => {
             3,
             OpcodesEnum.ADD,
             OpcodesEnum.STOP,
-          ])
+          ]).result
         ).toEqual(5);
       });
     });
@@ -26,7 +27,7 @@ describe('Interpreter', () => {
             3,
             OpcodesEnum.SUB,
             OpcodesEnum.STOP,
-          ])
+          ]).result
         ).toEqual(1);
       });
     });
@@ -40,7 +41,7 @@ describe('Interpreter', () => {
             3,
             OpcodesEnum.MUL,
             OpcodesEnum.STOP,
-          ])
+          ]).result
         ).toEqual(6);
       });
     });
@@ -55,7 +56,7 @@ describe('Interpreter', () => {
             3,
             OpcodesEnum.DIV,
             OpcodesEnum.STOP,
-          ])
+          ]).result
         ).toEqual(1.5);
       });
     });
@@ -70,7 +71,7 @@ describe('Interpreter', () => {
             3,
             OpcodesEnum.LT,
             OpcodesEnum.STOP,
-          ])
+          ]).result
         ).toEqual(0);
       });
     });
@@ -84,7 +85,7 @@ describe('Interpreter', () => {
             3,
             OpcodesEnum.GT,
             OpcodesEnum.STOP,
-          ])
+          ]).result
         ).toEqual(1);
       });
     });
@@ -98,7 +99,7 @@ describe('Interpreter', () => {
             2,
             OpcodesEnum.EQ,
             OpcodesEnum.STOP,
-          ])
+          ]).result
         ).toEqual(1);
       });
     });
@@ -112,7 +113,7 @@ describe('Interpreter', () => {
             1,
             OpcodesEnum.AND,
             OpcodesEnum.STOP,
-          ])
+          ]).result
         ).toEqual(0);
       });
     });
@@ -126,7 +127,7 @@ describe('Interpreter', () => {
             0,
             OpcodesEnum.OR,
             OpcodesEnum.STOP,
-          ])
+          ]).result
         ).toEqual(1);
       });
     });
@@ -143,7 +144,7 @@ describe('Interpreter', () => {
             OpcodesEnum.PUSH,
             99,
             OpcodesEnum.STOP,
-          ])
+          ]).result
         ).toEqual(99);
       });
     });
@@ -162,7 +163,7 @@ describe('Interpreter', () => {
             OpcodesEnum.PUSH,
             99,
             OpcodesEnum.STOP,
-          ])
+          ]).result
         ).toEqual(99);
       });
     });
@@ -191,6 +192,39 @@ describe('Interpreter', () => {
           new Interpreter().runCode([OpcodesEnum.PUSH, 0, OpcodesEnum.JUMP])
         ).toThrow();
       });
+    });
+    it('and the code includes STORE', () => {
+      const interpreter = new Interpreter({ storageTrie: new Trie() });
+      const key = 'foo';
+      const value = 'bar';
+      const code = [
+        OpcodesEnum.PUSH,
+        value,
+        OpcodesEnum.PUSH,
+        key,
+        OpcodesEnum.STORE,
+        OpcodesEnum.STOP,
+      ];
+      interpreter.runCode(code);
+      expect(interpreter.storageTrie.get({ key })).toEqual(value);
+    });
+    it('and the code includes LOAD', () => {
+      const interpreter = new Interpreter({ storageTrie: new Trie() });
+      const key = 'foo';
+      const value = 'bar';
+      const code = [
+        OpcodesEnum.PUSH,
+        value,
+        OpcodesEnum.PUSH,
+        key,
+        OpcodesEnum.STORE,
+        OpcodesEnum.PUSH,
+        key,
+        OpcodesEnum.LOAD,
+        OpcodesEnum.STOP,
+      ];
+      const { result } = interpreter.runCode(code);
+      expect(result).toEqual(value);
     });
   });
 });

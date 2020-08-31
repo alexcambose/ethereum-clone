@@ -1,6 +1,7 @@
 import Transaction from './Transaction';
 import Account from '../account/Account';
 import State from '../store/State';
+import { OpcodesEnum } from '../interpreter/Interpreter';
 
 describe('Transaction', () => {
   let standardTransaction: Transaction;
@@ -75,6 +76,51 @@ describe('Transaction', () => {
           state,
         })
       ).rejects.toMatchObject({ message: /does not exist/ });
+    });
+
+    it('does not validate when the gas limit exceeds the balance', () => {
+      standardTransaction = Transaction.createTransaction({
+        account,
+        to: 'foo-recipient',
+        gasLimit: 30000,
+      });
+      expect(
+        Transaction.validateStandardTransaction({
+          transaction: standardTransaction,
+          state,
+        })
+      ).rejects.toMatchObject({ message: /exceeds/ });
+    });
+
+    it('does not validate when the gas used for the code exceeds the gasLimit', () => {
+      const codeHash = 'foo-codehash';
+      const code = [
+        OpcodesEnum.PUSH,
+        1,
+        OpcodesEnum.PUSH,
+        2,
+        OpcodesEnum.ADD,
+        OpcodesEnum.STOP,
+      ];
+
+      state.putAccount({
+        address: codeHash,
+        accountData: {
+          code,
+          codeHash,
+        },
+      });
+      standardTransaction = Transaction.createTransaction({
+        account,
+        to: codeHash,
+        gasLimit: 0,
+      });
+      expect(
+        Transaction.validateStandardTransaction({
+          transaction: standardTransaction,
+          state,
+        })
+      ).rejects.toMatchObject({ message: /gas/ });
     });
   });
 

@@ -7,18 +7,21 @@ const postTransact = async ({
   to = undefined,
   value = undefined,
   code = undefined,
+  gasLimit = undefined,
 }) => {
   console.log(
     `POST ${BASE_URL}/account/transact with ${JSON.stringify({
       to,
       value,
       code,
+      gasLimit,
     })}`
   );
   const { data } = await axios.post(`${BASE_URL}/account/transact`, {
     to,
     value,
     code,
+    gasLimit,
   });
   console.log('TRANSACT', data);
   return data;
@@ -50,12 +53,17 @@ const getBalance = async ({ address = undefined } = {}) =>
   // await getMine();
   //
   // await postTransact({ to: accountData.address, value: 20 });
+  const key = 'foo';
+  const value = 'bar';
   const code = [
     OpcodesEnum.PUSH,
-    4,
+    value,
     OpcodesEnum.PUSH,
-    5,
-    OpcodesEnum.ADD,
+    key,
+    OpcodesEnum.STORE,
+    OpcodesEnum.PUSH,
+    key,
+    OpcodesEnum.LOAD,
     OpcodesEnum.STOP,
   ];
   const {
@@ -66,7 +74,11 @@ const getBalance = async ({ address = undefined } = {}) =>
   console.log(smartContractData);
   // @ts-ignore
   await getMine();
-  await postTransact({ to: smartContractData.codeHash, value: 0 });
+  await postTransact({
+    to: smartContractData.codeHash,
+    value: 10,
+    gasLimit: 100,
+  });
   await getMine();
 
   // console.log(await getBalance({ address: accountData.address }));

@@ -44,11 +44,12 @@ app.get('/blockchain/mine', async (req, res, next) => {
 });
 
 app.post('/account/transact', (req, res) => {
-  const { to, value, code } = req.body;
+  const { to, value, code, gasLimit } = req.body;
   const transaction = Transaction.createTransaction({
     account: !to ? new Account({ code }) : account,
     to,
     value,
+    gasLimit,
   });
   pubsub.broadcastTransaction(transaction);
   res.json({ transaction });

@@ -2,8 +2,11 @@ import Trie from './Trie';
 import Account from '../account/Account';
 export default class State {
   stateTrie: Trie;
+  storageTrieMap: { [address: string]: Trie };
+
   constructor() {
     this.stateTrie = new Trie();
+    this.storageTrieMap = {};
   }
 
   putAccount({
@@ -13,7 +16,17 @@ export default class State {
     address: string;
     accountData: object;
   }) {
-    this.stateTrie.put({ key: address, value: accountData });
+    if (!this.storageTrieMap[address]) {
+      this.storageTrieMap[address] = new Trie();
+    }
+
+    this.stateTrie.put({
+      key: address,
+      value: {
+        ...accountData,
+        storageRoot: this.storageTrieMap[address].rootHash,
+      },
+    });
   }
 
   getAccount({ address }: { address: string }): Account {

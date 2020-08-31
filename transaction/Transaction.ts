@@ -21,6 +21,7 @@ export default class Transaction {
   value: number;
   data: TransactionData;
   signature: EC.Signature;
+  gasLimit = 0;
   constructor({
     id = uuid(),
     from = '-',
@@ -28,6 +29,7 @@ export default class Transaction {
     value = 0,
     data = null,
     signature = null,
+    gasLimit = 0,
   }) {
     this.id = id;
     this.from = from;
@@ -35,6 +37,7 @@ export default class Transaction {
     this.value = value;
     this.data = data;
     this.signature = signature;
+    this.gasLimit = gasLimit;
   }
 
   static createTransaction({
@@ -42,16 +45,19 @@ export default class Transaction {
     to,
     value,
     beneficiary,
+    gasLimit,
   }: {
     account?: Account;
     to?: string;
     value?: number;
     beneficiary?: string;
+    gasLimit?: number;
   }) {
     if (beneficiary) {
       return new Transaction({
         to: beneficiary,
         value: MINING_REWARD,
+        gasLimit,
         data: {
           type: TransactionTypeEnum.MINING_REWARD,
         },
@@ -62,7 +68,8 @@ export default class Transaction {
         id: uuid(),
         from: account.address,
         to,
-        value,
+        value: value || 0,
+        gasLimit: gasLimit || 0,
         data: { type: TransactionTypeEnum.TRANSACT },
       };
       return new Transaction({
@@ -84,7 +91,7 @@ export default class Transaction {
     transaction: Transaction;
     state: State;
   }): Promise<boolean> {
-    const { id, from, signature, value, to } = transaction;
+    const { id, from, signature, value, to, gasLimit } = transaction;
     const transactionData = { ...transaction };
     delete transactionData.signature;
 
@@ -98,15 +105,26 @@ export default class Transaction {
       throw new Error(`Transaction ${id} signature is invalid`);
     }
     const fromBalance = state.getAccount({ address: from }).balance;
-    if (value > fromBalance) {
+    if (value + gasLimit > fromBalance) {
       throw new Error(
-        `Transaction value ${value} exceeds the balance ${fromBalance}`
+        `Transaction value ${value} and gas limit ${gasLimit} exceeds the balance ${fromBalance}`
       );
     }
 
     const toAccount = state.getAccount({ address: to });
     if (!toAccount) {
       throw new Error(`The to field: ${to} does not exist!`);
+    }
+
+    if (toAccount.codeHash) {
+      const { gasUsed } = new Interpreter({
+        storageTrie: state.storageTrieMap[toAccount.codeHash],
+      }).runCode(toAccount.code);
+      if (gasUsed > gasLimit) {
+        throw new Error(
+          `Transaction needs more gas. Provided: ${gasLimit}. Needs: ${gasUsed}`
+        );
+      }
     }
     return true;
   }
@@ -209,16 +227,23 @@ export default class Transaction {
   }) {
     const fromAccount = state.getAccount({ address: transaction.from });
     const toAccount = state.getAccount({ address: transaction.to });
+    const { value, gasLimit } = transaction;
+    let gasUsed = 0;
+    let result;
 
     if (toAccount.codeHash) {
-      const interpreter = new Interpreter();
-      const result = interpreter.runCode(toAccount.code);
-      console.log('toACCount', result);
+      const interpreter = new Interpreter({
+        storageTrie: state.storageTrieMap[toAccount.codeHash],
+      });
+      ({ result, gasUsed } = interpreter.runCode(toAccount.code));
+      console.log(` *** ${result} ***`);
     }
-    const { value } = transaction;
-
+    const refund = gasLimit - gasUsed;
     fromAccount.balance -= value;
+    fromAccount.balance -= gasLimit;
+    fromAccount.balance += refund;
     toAccount.balance += value;
+    toAccount.balance += gasUsed;
 
     state.putAccount({
       address: fromAccount.address,
