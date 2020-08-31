@@ -3,6 +3,7 @@ import Account from '../account/Account';
 import { ec as EC } from 'elliptic';
 import State from '../store/State';
 import { MINING_REWARD } from '../config';
+import Interpreter from '../interpreter/Interpreter';
 
 enum TransactionTypeEnum {
   CREATE_ACCOUNT,
@@ -119,7 +120,7 @@ export default class Transaction {
 
     if (fields.length !== expectedAccountDataFields.length) {
       throw new Error(
-        `The transaction account data has an incorrect number of fields`
+        `The transaction account data has an incorrect number of fields. Current: ${fields} expected: ${expectedAccountDataFields}`
       );
     }
     fields.forEach((field) => {
@@ -209,6 +210,11 @@ export default class Transaction {
     const fromAccount = state.getAccount({ address: transaction.from });
     const toAccount = state.getAccount({ address: transaction.to });
 
+    if (toAccount.codeHash) {
+      const interpreter = new Interpreter();
+      const result = interpreter.runCode(toAccount.code);
+      console.log('toACCount', result);
+    }
     const { value } = transaction;
 
     fromAccount.balance -= value;
@@ -229,9 +235,9 @@ export default class Transaction {
   }) {
     const { accountData } = transaction.data;
     // @ts-ignore
-    const { address } = accountData;
+    const { address, codeHash } = accountData;
 
-    state.putAccount({ address, accountData });
+    state.putAccount({ address: codeHash ? codeHash : address, accountData });
   }
 
   static runMiningRewardTransaction({

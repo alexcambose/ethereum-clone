@@ -1,14 +1,37 @@
 import axios from 'axios';
+import { OpcodesEnum } from './interpreter/Interpreter';
 
 const BASE_URL = 'http://localhost:3000';
 
-const postTransact = ({ to = undefined, value = undefined }) =>
-  axios.post(`${BASE_URL}/account/transact`, { to, value });
+const postTransact = async ({
+  to = undefined,
+  value = undefined,
+  code = undefined,
+}) => {
+  console.log(
+    `POST ${BASE_URL}/account/transact with ${JSON.stringify({
+      to,
+      value,
+      code,
+    })}`
+  );
+  const { data } = await axios.post(`${BASE_URL}/account/transact`, {
+    to,
+    value,
+    code,
+  });
+  console.log('TRANSACT', data);
+  return data;
+};
 const getMine = () =>
   new Promise((resolve) => {
     setTimeout(async () => {
-      axios.get(`${BASE_URL}/blockchain/mine`).then(resolve);
-    }, 1000);
+      console.log(`${BASE_URL}/blockchain/mine`);
+      // @ts-ignore
+      const { data } = await axios.get(`${BASE_URL}/blockchain/mine`);
+      console.log('MINED', data);
+      resolve(data);
+    }, 5000);
   });
 const getBalance = async ({ address = undefined } = {}) =>
   (
@@ -17,20 +40,34 @@ const getBalance = async ({ address = undefined } = {}) =>
     )
   ).data;
 (async () => {
-  let {
-    data: {
-      transaction: {
-        data: { accountData },
-      },
+  // let {
+  //   // @ts-ignore
+  //   transaction: {
+  //     data: { accountData },
+  //   },
+  // } = await postTransact({});
+  //
+  // await getMine();
+  //
+  // await postTransact({ to: accountData.address, value: 20 });
+  const code = [
+    OpcodesEnum.PUSH,
+    4,
+    OpcodesEnum.PUSH,
+    5,
+    OpcodesEnum.ADD,
+    OpcodesEnum.STOP,
+  ];
+  const {
+    transaction: {
+      data: { accountData: smartContractData },
     },
-  } = await postTransact({});
+  } = await postTransact({ code });
+  console.log(smartContractData);
   // @ts-ignore
-  console.log((await getMine()).data);
+  await getMine();
+  await postTransact({ to: smartContractData.codeHash, value: 0 });
+  await getMine();
 
-  let { data } = await postTransact({ to: accountData.address, value: 20 });
-
-  // @ts-ignore
-  console.log((await getMine()).data);
-
-  console.log(await getBalance({ address: accountData.address }));
+  // console.log(await getBalance({ address: accountData.address }));
 })();

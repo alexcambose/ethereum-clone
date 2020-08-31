@@ -44,9 +44,9 @@ app.get('/blockchain/mine', async (req, res, next) => {
 });
 
 app.post('/account/transact', (req, res) => {
-  const { to, value } = req.body;
+  const { to, value, code } = req.body;
   const transaction = Transaction.createTransaction({
-    account: !to ? new Account() : account,
+    account: !to ? new Account({ code }) : account,
     to,
     value,
   });

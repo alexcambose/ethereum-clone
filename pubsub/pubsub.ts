@@ -54,14 +54,14 @@ export default class Pubsub {
                 block: message,
                 transactionQueue: this.transactionQueue,
               });
-              console.error(`New block accepted`, message);
+              console.error(`New block accepted`, JSON.stringify(message));
             } catch (e) {
               console.error(`New block rejected`, e.message);
             }
             break;
 
           case CHANNELS_MAP.TRANSACTION:
-            console.log(`Received transaction ${message.id}`);
+            console.log(`Received transaction `, JSON.stringify(message));
             this.transactionQueue.add(new Transaction(message));
             break;
 
