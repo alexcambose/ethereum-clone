@@ -1,5 +1,5 @@
 # ethereum-clone
-A very basic implementation of how Ethereum and EVM works, also implements a few opcodes
+A basic implementation of Ethereum and EVM. It implements a blockchain, EOA, and interpreter with a few opcodes like PUSH, STORE, LOAD, JUMP, and more.
 
 ```ts
 const key = 'foo';
